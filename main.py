@@ -212,28 +212,30 @@ def recommend_movie(rating_df, user_id):
         similar_users = similarity_matrix.mean(axis=1)
         similar_users = similar_users.sort_values(ascending=False).head(5)
 
-        # Print similar users with the best match at the top
-        print("Similar Users:")
-        print(similar_users.sort_values(ascending=False))  # Sorting to ensure best match at the top
-
         # Get the ratings from similar users
         similar_user_ratings = filtered_matrix.loc[similar_users.index]
         print("Similar User Ratings:")
         print(similar_user_ratings.head())
 
-        # Recommend movies based on the average ratings of similar users
         recommended_movies = similar_user_ratings.mean(axis=0)
-        # Sort and include all movies to ensure non-empty list
         recommended_movies = recommended_movies.sort_values(ascending=False)
 
         # Ensure we have a list of movies to recommend
         if recommended_movies.empty:
             print("No movies to recommend based on similar users' ratings.")
-            # Return a random list of movies if no recommendations are available
-            random_movie_list = rating_df['movieId'].dropna().sample(10)
-            random_movie_list = random_movie_list.map(lambda x: movies_df[movies_df['movieId'] == x]['title'].values[0] if not movies_df[movies_df['movieId'] == x].empty else 'Unknown')
+            random_movie_id_list = rating_df['movieId'].dropna().sample(10).tolist()
+            random_movie_list = []
+
+            for movie_id in random_movie_id_list:
+                movie_title = movies_df[movies_df['movieId'] == movie_id]['title']
+                if not movie_title.empty:
+                    random_movie_list.append(movie_title.values[0])
+                else:
+                    random_movie_list.append('Unknown')
+
             print("Here are some random movies for you:")
-            print(random_movie_list)
+            for movie in random_movie_list:
+                print(movie)
         else:
             # Select top 10 movies with the highest mean ratings
             top_recommended_movies = recommended_movies.head(10)
