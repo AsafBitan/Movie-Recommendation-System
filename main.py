@@ -1,6 +1,6 @@
 import sklearn as sk
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib as plt
 import numpy as np
 from dotenv import load_dotenv
 import os
@@ -31,9 +31,9 @@ merged_df = pd.merge(rating_df, movies_df, on='movieId')
 print("ratings:\n", rating_df)
 print("movies:\n",movies_df)
 print("tags:\n",tags_df)
-print("tags head:\n",tags_df.head(), "\n")
 print("links:\n",links_df)
-print("links head:\n",links_df.head(), "\n")
 print("scores:\n",genome_scores_df)
 print("tags:\n",genome_tags_df)
 print("merged df: \n", merged_df)
+
+
