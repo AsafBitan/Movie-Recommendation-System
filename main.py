@@ -48,38 +48,31 @@ def save_new_user_id(user_id):
     if os.path.exists(user_ids_file):
         try:
             user_ids_df = pd.read_csv(user_ids_file)
-            # If the file exists but is empty, create a new DataFrame with user_id
             if user_ids_df.empty:
                 user_ids_df = pd.DataFrame({'userId': [user_id]})
             else:
                 user_ids_df = pd.concat([user_ids_df, pd.DataFrame({'userId': [user_id]})], ignore_index=True)
         except pd.errors.EmptyDataError:
-            # If file is empty or can't be read, create a new DataFrame with user_id
             user_ids_df = pd.DataFrame({'userId': [user_id]})
     else:
-        # If file doesn't exist, create a new DataFrame with user_id
         user_ids_df = pd.DataFrame({'userId': [user_id]})
 
     user_ids_df.to_csv(user_ids_file, index=False)
 
 def EDA(rating_df, movies_df):
-    # Checking for missing values
     print(rating_df.isnull().sum(),"\n")
     print(movies_df.isnull().sum(),"\n")
 
-    # Getting basic statistics about the ratings
     print(rating_df.describe(),"\n")
 
     print(f"Number of unique Users: {rating_df['userId'].nunique()}")
     print(f"Number of unique Movies: {rating_df['movieId'].nunique()}","\n")
 
-    # Check for the most rated movies
     most_rated_movies = rating_df.groupby('movieId').size().sort_values(ascending=False).head(10)
     print(most_rated_movies,"\n")
 
     merged_df = pd.merge(rating_df, movies_df, on='movieId')
 
-    # Check for the most rated movies
     popular_movies = merged_df.groupby('title').size().sort_values(ascending=False).head(10)
     print(popular_movies,"\n")
 
@@ -120,55 +113,10 @@ def collect_user_rating(movies_df, user_id):
 
     return user_rating
 
-# def recommend_movie(rating_df, user_id):
-#     want_rec = input("Do you want movie recommendations? (y/n): ").strip().lower()
-
-#     if want_rec == "y":
-#         user_data = pd.read_csv(f'user_data_{user_id}.csv')
-#         print("User data before merging:")
-#         print(user_data.head())
-
-#         full_data = pd.concat([rating_df, user_data], ignore_index=True)
-
-
-        
-#         full_data['userId'] = full_data['userId'].astype(int)
-#         full_data['movieId'] = full_data['movieId'].astype(int)
-
-#         full_data = full_data.dropna(subset=['userId'])
-
-#         movie_user_matrix = full_data.pivot_table(index='userId', columns='movieId', values='rating')
-        
-#         if user_id not in movie_user_matrix.index:
-#             print(f"No ratings found for User {user_id}.")
-#             return
-#         # movie_user_matrix = movie_user_matrix.fillna(0)
-
-#         similarity_matrix = movie_user_matrix.T.corr(method='pearson')
-
-#         user_ratings = movie_user_matrix.loc[user_id]
-#         user_ratings = user_ratings.fillna(0)
-
-#         valid_users = user_ratings.index[user_ratings > 0]
-#         similar_users = similarity_matrix.loc[valid_users, valid_users].mean(axis=1)
-
-#         similar_users = similar_users.sort_values(ascending=False).head(5)
-
-#         similar_user_ratings = movie_user_matrix.loc[similar_users.index]
-#         recommended_movies = similar_user_ratings.mean(axis=0).sort_values(ascending=False)
-
-#         recommended_movies = recommended_movies[recommended_movies.index.difference(user_ratings[user_ratings > 0].index)]
-
-#         print("We recommend the following movies for you:")
-#         print(recommended_movies.head(10))
-
-#     else:
-#         print("Bye!")
 def recommend_movie(rating_df, user_id):
     want_rec = input("Do you want movie recommendations? (y/n): ").strip().lower()
 
     if want_rec == "y":
-        # Load user data
         try:
             user_data = pd.read_csv(f'user_data_{user_id}.csv')
             print("User data before merging:")
@@ -177,50 +125,39 @@ def recommend_movie(rating_df, user_id):
             print(f"User data for {user_id} not found.")
             return
         
-        # Concatenate the user's ratings with the existing dataset
         full_data = pd.concat([rating_df, user_data], ignore_index=True)
 
-        # Convert userId and movieId to integers to ensure consistency
         full_data['userId'] = full_data['userId'].astype(int)
         full_data['movieId'] = full_data['movieId'].astype(int)
 
-        # Drop rows with missing userId or movieId
         full_data = full_data.dropna(subset=['userId', 'movieId'])
 
-        # Create the full user-item matrix
         movie_user_matrix = full_data.pivot_table(index='userId', columns='movieId', values='rating')
 
-        # Get the user's ratings
         user_ratings = movie_user_matrix.loc[user_id]
-        print("User Ratings:")
-        print(user_ratings)
+        # print("User Ratings:")
+        # print(user_ratings)
 
-        # Get movies rated by the user
         rated_movies = user_ratings[user_ratings > 0].index
-        print("Rated Movies:")
-        print(rated_movies)
+        # print("Rated Movies:")
+        # print(rated_movies)
 
-        # Filter the matrix to only include these movies for all users
         filtered_matrix = movie_user_matrix[rated_movies]
-        print("Filtered User-item Matrix:")
-        print(filtered_matrix.head())
+        # print("Filtered User-item Matrix:")
+        # print(filtered_matrix.head())
 
-        # Calculate the similarity matrix using Pearson correlation on the filtered matrix
         similarity_matrix = filtered_matrix.T.corr(method='pearson')
 
-        # Calculate similarity for the user based on the filtered matrix
         similar_users = similarity_matrix.mean(axis=1)
         similar_users = similar_users.sort_values(ascending=False).head(5)
 
-        # Get the ratings from similar users
         similar_user_ratings = filtered_matrix.loc[similar_users.index]
-        print("Similar User Ratings:")
-        print(similar_user_ratings.head())
+        # print("Similar User Ratings:")
+        # print(similar_user_ratings.head())
 
         recommended_movies = similar_user_ratings.mean(axis=0)
         recommended_movies = recommended_movies.sort_values(ascending=False)
 
-        # Ensure we have a list of movies to recommend
         if recommended_movies.empty:
             print("No movies to recommend based on similar users' ratings.")
             random_movie_id_list = rating_df['movieId'].dropna().sample(10).tolist()
